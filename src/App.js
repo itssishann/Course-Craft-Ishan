@@ -32,6 +32,10 @@ import { useEffect } from "react";
 import Home from "./components/core/Home_Page/Home";
 import AdminStats from "./components/AdminPage/AdminStats";
 import AdminDashboard from "./components/AdminPage/AdminStats";
+import UserDashboard from "./components/AdminPage/UsersDashboard";
+import CourseDashboard from "./components/AdminPage/CourseDashboard";
+import EnrolledStudents from "./components/AdminPage/EnrolledStudents";
+import CreateCategory from "./components/AdminPage/CreateCategory";
 
 function App() {
   const dispatch = useDispatch();
@@ -130,9 +134,10 @@ function App() {
           {user?.accountType === ACCOUNT_TYPE.ADMIN && (
             <>
               <Route path="/dashboard/stats" element={<AdminStats />} />
-              <Route path="/dashboard/users" element={<AdminDashboard />} />
-
-              <Route path="dashboard/Settings" element={<Settings />} />
+              <Route path="/dashboard/settings" element={<CreateCategory />} />
+              <Route path="/dashboard/users" element={<UserDashboard />} />
+              <Route path="/dashboard/admin/enrolled-students/:courseId" element={<EnrolledStudents />} />
+              <Route path="dashboard/admin/courses" element={<CourseDashboard />} />
 
             </>
           )}

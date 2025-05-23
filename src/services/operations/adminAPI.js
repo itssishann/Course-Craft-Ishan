@@ -10,6 +10,7 @@ const {
   ADMIN_APPROVE_INSTRUCTOR_API,
   ADMIN_UPDATE_COURSE_API,
   ADMIN_DELETE_COURSE_API,
+  ADMIN_CREATE_CATEGORY
 } = adminEndPoints;
 
 const getAuthHeader = () => {
@@ -27,7 +28,7 @@ export async function fetchAllInstructors() {
   try {
     const response = await axios.get(ADMIN_GET_INSTRUCTORS_API, getAuthHeader());
     toast.success("Instructors loaded");
-    return response.data.instructors;
+    return response.data;
   } catch (error) {
     toast.error(error.response?.data?.message || error.message);
     return null;
@@ -90,15 +91,24 @@ export async function approveInstructor(instructorId) {
       null,
       getAuthHeader()
     );
-    toast.success("Instructor approved");
-    return true;
+
+    if (response.data.success) {
+      toast.success(response.data.message || "Instructor approved");
+      return true;
+    } else {
+      toast.error(response.data.message || "Approval failed");
+      return false;
+    }
+
   } catch (error) {
+    console.log("Axios error:", error.response);
     toast.error(error.response?.data?.message || error.message);
     return false;
   } finally {
     toast.dismiss(toastId);
   }
 }
+
 
 // Update course
 export async function updateCourse(courseId, name, price) {
@@ -129,6 +139,30 @@ export async function deleteCourse(courseId) {
     );
     toast.success("Course deleted");
     return true;
+  } catch (error) {
+    toast.error(error.response?.data?.message || error.message);
+    return false;
+  } finally {
+    toast.dismiss(toastId);
+  }
+}
+// Create category
+export async function createCategory(name, description) {
+  const toastId = toast.loading("Creating category...");
+  try {
+    const response = await axios.post(
+      ADMIN_CREATE_CATEGORY,
+      { name, description },
+      getAuthHeader()
+    );
+
+    if (response.data.success) {
+      toast.success(response.data.message || "Category created successfully");
+      return response.data.category || true;
+    } else {
+      toast.error(response.data.message || "Failed to create category");
+      return false;
+    }
   } catch (error) {
     toast.error(error.response?.data?.message || error.message);
     return false;

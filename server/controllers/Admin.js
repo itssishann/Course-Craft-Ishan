@@ -1,24 +1,52 @@
 const User = require("../models/User");
 const Course = require("../models/Course");
-
+const InstructorApproval = require("../models/InstructorApproval")
 // Get all instructors
-exports.getAllInstructors = async (req, res) => {
-    try {
-        const instructors = await User.find({ accountType: "Instructor" })
-            .populate("additionalDetails", "contactNumber gender dateOfBirth about");
 
-        return res.status(200).json({
-            success: true,
-            instructors,
-        });
-    } catch (error) {
-        console.error("Error fetching instructors:", error.message);
-        return res.status(500).json({
-            success: false,
-            message: "Failed to fetch instructors",
-        });
-    }
+exports.getAllInstructors = async (req, res) => {
+  try {
+    // Get all instructors
+    const instructors = await User.find({ accountType: "Instructor" })
+      .populate("additionalDetails", "contactNumber gender dateOfBirth about");
+
+    // Get all approval records for these instructors
+    const approvals = await InstructorApproval.find({
+      instructorId: { $in: instructors.map(i => i._id) }
+    });
+
+    // Make a simple object to find if an instructor is approved or not
+    const approvalStatus = {};
+    approvals.forEach(item => {
+      approvalStatus[item.instructorId.toString()] = item.approved;
+    });
+
+    // Separate approved and pending instructors
+    const approvedInstructors = [];
+    const pendingInstructors = [];
+
+    instructors.forEach(instructor => {
+      if (approvalStatus[instructor._id.toString()]) {
+        approvedInstructors.push(instructor);
+      } else {
+        pendingInstructors.push(instructor);
+      }
+    });
+
+    // Send response with both lists
+    return res.status(200).json({
+      success: true,
+      approvedInstructors,
+      pendingInstructors,
+    });
+  } catch (error) {
+    console.error("Error fetching instructors:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch instructors",
+    });
+  }
 };
+
 
 // Get all students
 exports.getAllStudents = async (req, res) => {
@@ -185,37 +213,49 @@ exports.deleteCourse = async (req, res) => {
 };
 
 // Approve Instructor Account
+
 exports.approveInstructor = async (req, res) => {
-    try {
-        const { instructorId } = req.params;
+  try {
+    const { instructorId } = req.params;
 
-        if (!instructorId) {
-            return res.status(400).json({
-                success: false,
-                message: "Instructor ID is required",
-            });
-        }
-
-        const instructor = await User.findById(instructorId);
-        if (!instructor || instructor.accountType !== "Instructor") {
-            return res.status(404).json({
-                success: false,
-                message: "Instructor not found",
-            });
-        }
-
-        instructor.approved = true;
-        await instructor.save();
-
-        return res.status(200).json({
-            success: true,
-            message: "Instructor approved successfully",
-        });
-    } catch (error) {
-        console.error("Error approving instructor:", error.message);
-        return res.status(500).json({
-            success: false,
-            message: "Failed to approve instructor",
-        });
+    // Validate instructor exists and is an Instructor
+    const instructor = await User.findById(instructorId);
+    if (!instructor || instructor.accountType !== "Instructor") {
+      return res.status(404).json({
+        success: false,
+        message: "Instructor not found",
+      });
     }
+
+    // Check if instructor is already approved
+    const existingApproval = await InstructorApproval.findOne({ instructorId });
+
+    if (existingApproval?.approved) {
+      return res.status(200).json({
+        success: true,
+        message: "Instructor is already approved",
+        data: existingApproval,
+      });
+    }
+
+    // Approve instructor (insert or update)
+    const approval = await InstructorApproval.findOneAndUpdate(
+      { instructorId },
+      { approved: true },
+      { upsert: true, new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Instructor approved successfully",
+      data: approval,
+    });
+  } catch (error) {
+    console.error("❌ Error approving instructor:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to approve instructor",
+    });
+  }
 };
+

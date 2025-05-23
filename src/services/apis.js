@@ -79,4 +79,5 @@ export const adminEndPoints = {
   ADMIN_APPROVE_INSTRUCTOR_API: `${BASE_URL}/auth/admin/instructors/approve/:instructorId`,
   ADMIN_UPDATE_COURSE_API: `${BASE_URL}/auth/admin/update-course`,
   ADMIN_DELETE_COURSE_API: `${BASE_URL}/auth/admin/courses/:courseId`,
+  ADMIN_CREATE_CATEGORY: `${BASE_URL}/course/createCategory`
 };

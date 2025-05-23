@@ -54,7 +54,7 @@ export const sidebarLinks = [
   {
     id: 8,
     name: "Users",
-    path: "/dashboard/admin/users",
+    path: "/dashboard/users",
     type: ACCOUNT_TYPE.ADMIN,
     icon: "VscBroadcast", // for users (students & instructors)
   },
